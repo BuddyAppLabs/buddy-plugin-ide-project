@@ -17,6 +17,6 @@ export class Logger {
   }
 
   debug(message: string, ...args: any[]) {
-    console.log(`[${this.tag}:调试] ${message}`, ...args);
+    console.log(`[${this.tag}] ${message}`, ...args);
   }
 }

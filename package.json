@@ -1,16 +1,17 @@
 {
-  "name": "@coffic/plugin-ide-workspace",
-  "version": "1.1.14",
-  "description": "Buddy 插件 - IDE工作空间信息显示，支持Git自动提交",
+  "name": "@coffic/buddy-plugin-project-launcher",
+  "version": "1.0.0",
+  "description": "Buddy 插件 - 通过关键词快速打开IDE项目",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "ts-node src/test.ts"
+    "test": "ts-node src/test-cli.ts"
   },
   "keywords": [
     "plugin",
     "ide",
-    "workspace",
+    "launcher",
+    "project",
     "vscode",
     "buddy-plugin"
   ],

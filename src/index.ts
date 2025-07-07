@@ -1,101 +1,95 @@
+import { SuperPlugin, SuperAction, GetActionsArgs, ExecuteActionArgs, ExecuteResult } from '@coffic/buddy-types';
+import { VSCodeService } from './providers/vscode-service';
+import { FileSystemHelper } from './utils/file-system-helper';
 import { Logger } from './utils/logger';
-import { ExecuteActionArgs, ExecuteResult, GetActionsArgs, SuperAction, SuperPlugin } from '@coffic/buddy-types';
-import { IDEServiceFactory } from './services/ide_factory';
-import { ActionManager } from './action-manager';
+import fs from 'fs';
+import path from 'path';
+import { ProjectHistoryManager } from './history-manager';
 
-const logger = new Logger('IDE工作空间');
-const actionManager = new ActionManager();
+const logger = new Logger('ProjectLauncherPlugin');
+const ACTION_ID_PREFIX = 'open-project-';
+const historyManager = new ProjectHistoryManager();
 
-/**
- * IDE工作空间插件
- * 用于显示当前IDE的工作空间信息
- * 提供打开工作区文件浏览器的功能
- * 工作区路径会被缓存到本地文件
- */
+// 检查目录下是否有 Xcode 工程文件
+async function hasXcodeProject(projectPath: string): Promise<boolean> {
+	try {
+		const files = await fs.promises.readdir(projectPath);
+		return files.some(f => f.endsWith('.xcodeproj') || f.endsWith('.xcworkspace'));
+	} catch {
+		return false;
+	}
+}
+
 export const plugin: SuperPlugin = {
-	name: 'IDE工作空间',
-	description: '显示当前IDE的工作空间信息',
-	version: '1.0.0',
+	id: 'project-launcher',
+	name: '@coffic/buddy-plugin-project-launcher',
+	description: 'Buddy 插件 - 通过关键词快速打开IDE项目',
 	author: 'Coffic',
-	id: '',
+	version: '1.0.0',
 	path: '',
 	type: 'user',
 
-	/**
-	 * 获取插件提供的动作列表
-	 * 
-	 * @param args 获取动作列表的参数
-	 * @returns 动作列表
-	 */
 	async getActions(args: GetActionsArgs): Promise<SuperAction[]> {
-		logger.info(`获取动作列表，关键词: "${args.keyword}", 应用: "${args.overlaidApp}"`);
-
-		// 检查是否为支持的IDE并创建对应的服务实例
-		const ideService = IDEServiceFactory.createService(args.overlaidApp || '');
-		if (!ideService) {
-			logger.debug('不是支持的IDE，返回空列表');
+		if (!args.keyword) {
 			return [];
 		}
 
-		// 保存当前应用ID到缓存
-		await IDEServiceFactory.saveCurrentApp(args.overlaidApp || '');
-
-		// 预先获取工作空间信息
-		const workspace = await ideService.getWorkspace();
-
-		// 将工作区路径缓存到文件中
-		if (workspace) {
-			await IDEServiceFactory.saveWorkspace(args.overlaidApp || '', workspace);
+		const query = args.keyword?.toLowerCase() || '';
+		const recentProjects = await historyManager.getRecentProjects();
+		const filteredProjects = recentProjects.filter(project =>
+			project.name.toLowerCase().includes(query) || project.path.toLowerCase().includes(query)
+		);
+		const actions: SuperAction[] = [];
+		for (const project of filteredProjects) {
+			// VSCode
+			actions.push({
+				id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-vscode`,
+				globalId: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-vscode`,
+				pluginId: 'project-launcher',
+				description: `${project.name}（用 VSCode 打开）`,
+				icon: 'vscode.png',
+			});
+			// Cursor
+			actions.push({
+				id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-cursor`,
+				globalId: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-cursor`,
+				pluginId: 'project-launcher',
+				description: `${project.name}（用 Cursor 打开）`,
+				icon: 'cursor.png',
+			});
+			// Xcode（仅当有工程文件时）
+			if (await hasXcodeProject(project.path)) {
+				actions.push({
+					id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-xcode`,
+					globalId: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-xcode`,
+					pluginId: 'project-launcher',
+					description: `${project.name}（用 Xcode 打开）`,
+					icon: 'xcode.png',
+				});
+			}
 		}
-
-		// 使用ActionManager获取所有可用动作
-		const actions = await actionManager.getActions(workspace || undefined, args.keyword);
-
-		logger.info(`返回 ${actions.length} 个动作`);
 		return actions;
 	},
 
-	/**
-	 * 执行插件动作
-	 * 
-	 * @param args 执行动作的参数
-	 * @returns 动作执行结果
-	 */
 	async executeAction(args: ExecuteActionArgs): Promise<ExecuteResult> {
-		logger.info(`执行动作: ${args.actionId} (${args.keyword})`);
-
+		const { actionId } = args;
+		if (!actionId.startsWith(ACTION_ID_PREFIX)) {
+			return { success: false, message: 'Unknown action ID.' };
+		}
+		// 解析 actionId: open-project-<path>-<ide>
+		const idBody = actionId.substring(ACTION_ID_PREFIX.length);
+		const lastDash = idBody.lastIndexOf('-');
+		if (lastDash === -1) {
+			return { success: false, message: 'Action ID 格式错误' };
+		}
+		const encodedPath = idBody.substring(0, lastDash);
+		const ide = idBody.substring(lastDash + 1);
+		const projectPath = decodeURIComponent(encodedPath);
 		try {
-			// 从缓存中获取工作区路径
-			// 不需要提供应用ID，会自动使用缓存中的当前应用ID
-			const workspace = IDEServiceFactory.getWorkspace();
-
-			if (!workspace) {
-				const currentApp = IDEServiceFactory.getCurrentApp();
-				logger.error(`无法从缓存获取工作区路径，应用ID: ${currentApp}`);
-
-				if (currentApp) {
-					// 尝试重新获取工作区路径
-					const ideService = IDEServiceFactory.createService(currentApp);
-					if (ideService) {
-						const freshWorkspace = await ideService.getWorkspace();
-						if (freshWorkspace) {
-							// 重新缓存工作区路径
-							await IDEServiceFactory.saveWorkspace(currentApp, freshWorkspace);
-
-							// 继续执行动作
-							return this.executeAction(args);
-						}
-					}
-				}
-
-				return { success: false, message: `无法获取工作区路径，请重新打开IDE` };
-			}
-
-			// 使用ActionManager执行动作
-			return await actionManager.executeAction(args, workspace);
-		} catch (error: any) {
-			logger.error(`执行动作失败:`, error);
-			return { success: false, message: `执行失败: ${error.message || '未知错误'}` };
+			await FileSystemHelper.openInIDE(projectPath, ide as any);
+			return { success: true, message: `已用${ide}打开：${projectPath}` };
+		} catch (e: any) {
+			return { success: false, message: e?.message || String(e) };
 		}
 	},
 };
