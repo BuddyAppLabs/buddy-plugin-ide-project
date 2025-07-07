@@ -1,6 +1,6 @@
 {
   "name": "@coffic/buddy-plugin-project-launcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Buddy 插件 - 通过关键词快速打开IDE项目",
   "main": "dist/index.js",
   "scripts": {
