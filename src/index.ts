@@ -1,12 +1,9 @@
-import { SuperPlugin, SuperAction, GetActionsArgs, ExecuteActionArgs, ExecuteResult } from '@coffic/buddy-types';
-import { VSCodeService } from './providers/vscode-service';
-import { FileSystemHelper } from './utils/file-system-helper';
-import { Logger } from './utils/logger';
-import fs from 'fs';
-import path from 'path';
-import { ProjectHistoryManager } from './history-manager';
 
-const logger = new Logger('ProjectLauncherPlugin');
+import { FileSystemHelper } from './utils/file-system-helper';
+import fs from 'fs';
+import { ProjectHistoryManager } from './history-manager';
+import { ActionResult, SuperAction, SuperContext, SuperPlugin } from '@coffic/buddy-it';
+
 const ACTION_ID_PREFIX = 'open-project-';
 const historyManager = new ProjectHistoryManager();
 
@@ -29,12 +26,12 @@ export const plugin: SuperPlugin = {
 	path: '',
 	type: 'user',
 
-	async getActions(args: GetActionsArgs): Promise<SuperAction[]> {
-		if (!args.keyword) {
+	async getActions(context: SuperContext): Promise<SuperAction[]> {
+		if (!context.keyword) {
 			return [];
 		}
 
-		const query = args.keyword?.toLowerCase() || '';
+		const query = context.keyword?.toLowerCase() || '';
 		const recentProjects = await historyManager.getRecentProjects();
 		const filteredProjects = recentProjects.filter(project =>
 			project.name.toLowerCase().includes(query) || project.path.toLowerCase().includes(query)
@@ -44,40 +41,30 @@ export const plugin: SuperPlugin = {
 			// VSCode
 			actions.push({
 				id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-vscode`,
-				globalId: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-vscode`,
-				pluginId: 'project-launcher',
 				description: `${project.name}（用 VSCode 打开）`,
-				icon: 'vscode.png',
 			});
 			// Cursor
 			actions.push({
 				id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-cursor`,
-				globalId: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-cursor`,
-				pluginId: 'project-launcher',
 				description: `${project.name}（用 Cursor 打开）`,
-				icon: 'cursor.png',
 			});
 			// Xcode（仅当有工程文件时）
 			if (await hasXcodeProject(project.path)) {
 				actions.push({
 					id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-xcode`,
-					globalId: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-xcode`,
-					pluginId: 'project-launcher',
 					description: `${project.name}（用 Xcode 打开）`,
-					icon: 'xcode.png',
 				});
 			}
 		}
 		return actions;
 	},
 
-	async executeAction(args: ExecuteActionArgs): Promise<ExecuteResult> {
-		const { actionId } = args;
-		if (!actionId.startsWith(ACTION_ID_PREFIX)) {
+	async executeAction(context: SuperContext): Promise<ActionResult> {
+		if (!context.actionId.startsWith(ACTION_ID_PREFIX)) {
 			return { success: false, message: 'Unknown action ID.' };
 		}
 		// 解析 actionId: open-project-<path>-<ide>
-		const idBody = actionId.substring(ACTION_ID_PREFIX.length);
+		const idBody = context.actionId.substring(ACTION_ID_PREFIX.length);
 		const lastDash = idBody.lastIndexOf('-');
 		if (lastDash === -1) {
 			return { success: false, message: 'Action ID 格式错误' };

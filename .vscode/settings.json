@@ -3,6 +3,8 @@
         "coffic",
         "softprops",
         "Trae",
-        "vscdb"
+        "vscdb",
+        "xcodeproj",
+        "xcworkspace"
     ]
 }
