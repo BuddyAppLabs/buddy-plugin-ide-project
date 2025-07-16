@@ -19,7 +19,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/inquirer": "^9.0.8",
-    "@types/node": "^24.0.10",
+    "@types/node": "^24.0.14",
     "chalk": "^4.1.2",
     "inquirer": "^12.7.0",
     "rimraf": "^6.0.1",
@@ -27,6 +27,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@coffic/buddy-it": "^1.0.3"
+    "@coffic/buddy-it": "^1.1.3"
   }
 }

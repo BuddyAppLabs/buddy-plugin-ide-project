@@ -1,20 +1,9 @@
 import { FileSystemHelper, IDE } from './utils/file-system-helper';
-import fs from 'fs';
 import { ProjectHistoryManager } from './history-manager';
 import { ActionResult, SuperAction, SuperContext, SuperPlugin } from '@coffic/buddy-it';
 
 const ACTION_ID_PREFIX = 'open-project-';
 const historyManager = new ProjectHistoryManager();
-
-// 检查目录下是否有 Xcode 工程文件
-async function hasXcodeProject(projectPath: string): Promise<boolean> {
-	try {
-		const files = await fs.promises.readdir(projectPath);
-		return files.some(f => f.endsWith('.xcodeproj') || f.endsWith('.xcworkspace'));
-	} catch {
-		return false;
-	}
-}
 
 export const plugin: SuperPlugin = {
 	id: 'project-launcher',
@@ -53,7 +42,7 @@ export const plugin: SuperPlugin = {
 				description: `${project.name}（用 Kiro 打开）`,
 			});
 			// Xcode（仅当有工程文件时）
-			if (await hasXcodeProject(project.path)) {
+			if (await FileSystemHelper.hasXcodeProject(project.path)) {
 				actions.push({
 					id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-xcode`,
 					description: `${project.name}（用 Xcode 打开）`,

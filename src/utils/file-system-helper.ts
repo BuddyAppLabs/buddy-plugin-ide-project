@@ -116,4 +116,13 @@ export class FileSystemHelper {
             throw error;
         }
     }
+
+    static async hasXcodeProject(projectPath: string): Promise<boolean> {
+        try {
+            const files = await fs.readdir(projectPath);
+            return files.some((f: string) => f.endsWith('.xcodeproj') || f.endsWith('.xcworkspace'));
+        } catch {
+            return false;
+        }
+    }
 } 
