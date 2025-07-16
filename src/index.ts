@@ -1,4 +1,4 @@
-import { FileSystemHelper } from './utils/file-system-helper';
+import { FileSystemHelper, IDE } from './utils/file-system-helper';
 import fs from 'fs';
 import { ProjectHistoryManager } from './history-manager';
 import { ActionResult, SuperAction, SuperContext, SuperPlugin } from '@coffic/buddy-it';
@@ -77,7 +77,7 @@ export const plugin: SuperPlugin = {
 		const ide = idBody.substring(lastDash + 1);
 		const projectPath = decodeURIComponent(encodedPath);
 		try {
-			await FileSystemHelper.openInIDE(projectPath, ide as any);
+			await FileSystemHelper.openInIDE(projectPath, ide as IDE);
 			return { success: true, message: `已用${ide}打开：${projectPath}` };
 		} catch (e: any) {
 			return { success: false, message: e?.message || String(e) };

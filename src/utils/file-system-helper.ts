@@ -3,6 +3,8 @@ import { promisify } from 'util';
 import { promises as fs } from 'fs';
 import { Logger } from './logger';
 
+export type IDE = 'vscode' | 'cursor' | 'xcode' | 'kiro';
+
 const execAsync = promisify(exec);
 const logger = new Logger('FileSystemHelper');
 
@@ -71,7 +73,7 @@ export class FileSystemHelper {
      * @param projectPath 项目路径
      * @param ide 'vscode' | 'cursor' | 'xcode' | 'kiro'
      */
-    static async openInIDE(projectPath: string, ide: 'vscode' | 'cursor' | 'xcode' | 'kiro'): Promise<void> {
+    static async openInIDE(projectPath: string, ide: IDE): Promise<void> {
         let command = '';
         switch (ide) {
             case 'vscode':
