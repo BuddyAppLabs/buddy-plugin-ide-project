@@ -69,9 +69,9 @@ export class FileSystemHelper {
     /**
      * 在指定的IDE中打开项目路径
      * @param projectPath 项目路径
-     * @param ide 'vscode' | 'cursor' | 'xcode'
+     * @param ide 'vscode' | 'cursor' | 'xcode' | 'kiro'
      */
-    static async openInIDE(projectPath: string, ide: 'vscode' | 'cursor' | 'xcode'): Promise<void> {
+    static async openInIDE(projectPath: string, ide: 'vscode' | 'cursor' | 'xcode' | 'kiro'): Promise<void> {
         let command = '';
         switch (ide) {
             case 'vscode':
@@ -93,6 +93,13 @@ export class FileSystemHelper {
                     command = `open -a "Xcode" "${projectPath}"`;
                 } else {
                     throw new Error('Xcode 仅支持 macOS');
+                }
+                break;
+            case 'kiro':
+                if (process.platform === 'darwin') {
+                    command = `open -a "Kiro" "${projectPath}"`;
+                } else {
+                    throw new Error('Kiro 仅支持 macOS');
                 }
                 break;
             default:

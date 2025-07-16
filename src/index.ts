@@ -1,4 +1,3 @@
-
 import { FileSystemHelper } from './utils/file-system-helper';
 import fs from 'fs';
 import { ProjectHistoryManager } from './history-manager';
@@ -47,6 +46,11 @@ export const plugin: SuperPlugin = {
 			actions.push({
 				id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-cursor`,
 				description: `${project.name}（用 Cursor 打开）`,
+			});
+			// Kiro
+			actions.push({
+				id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-kiro`,
+				description: `${project.name}（用 Kiro 打开）`,
 			});
 			// Xcode（仅当有工程文件时）
 			if (await hasXcodeProject(project.path)) {

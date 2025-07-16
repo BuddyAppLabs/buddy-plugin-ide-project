@@ -1,6 +1,7 @@
 import { IRecentProjectProvider, RecentProject } from './providers/recent-project-provider';
 import { VSCodeService } from './providers/vscode-service';
 import { CursorService } from './providers/cursor-service';
+import { KiroService } from './providers/kiro-service';
 import os from 'os';
 
 export class ProjectHistoryManager {
@@ -10,6 +11,7 @@ export class ProjectHistoryManager {
         this.providers = [
             new VSCodeService(),
             new CursorService(),
+            new KiroService(),
         ];
     }
 
