@@ -41,6 +41,11 @@ export const plugin: SuperPlugin = {
 				id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-kiro`,
 				description: `${project.name}（用 Kiro 打开）`,
 			});
+			// Qoder
+			actions.push({
+				id: `${ACTION_ID_PREFIX}${encodeURIComponent(project.path)}-qoder`,
+				description: `${project.name}（用 Qoder 打开）`,
+			});
 			// Xcode（仅当有工程文件时）
 			if (await FileSystemHelper.hasXcodeProject(project.path)) {
 				actions.push({

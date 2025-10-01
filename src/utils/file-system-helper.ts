@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import { promises as fs } from 'fs';
 import { Logger } from './logger';
 
-export type IDE = 'vscode' | 'cursor' | 'xcode' | 'kiro';
+export type IDE = 'vscode' | 'cursor' | 'xcode' | 'kiro' | 'qoder';
 
 const execAsync = promisify(exec);
 const logger = new Logger('FileSystemHelper');
@@ -102,6 +102,13 @@ export class FileSystemHelper {
                     command = `open -a "Kiro" "${projectPath}"`;
                 } else {
                     throw new Error('Kiro 仅支持 macOS');
+                }
+                break;
+            case 'qoder':
+                if (process.platform === 'darwin') {
+                    command = `open -a "Qoder" "${projectPath}"`;
+                } else {
+                    throw new Error('Qoder 仅支持 macOS');
                 }
                 break;
             default:
